@@ -154,6 +154,11 @@
             <h3 id="modal-title" class="text-2xl font-bold mb-4 dark:text-white">New Item</h3>
             <input type="text" id="modal-input" class="w-full bg-gray-100 dark:bg-gray-700 border-none rounded-2xl px-5 py-4 mb-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-pink outline-none transition-all" placeholder="Enter name...">
             
+            <!-- ช่องสำหรับใส่ Description (จะแสดงเฉพาะตอนสร้าง Activity) -->
+            <div id="modal-description-container" class="hidden-view mb-4">
+                <textarea id="modal-description" class="w-full bg-gray-100 dark:bg-gray-700 border-none rounded-2xl px-5 py-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-pink outline-none transition-all resize-none h-24" placeholder="Enter description (optional)..."></textarea>
+            </div>
+            
             <div id="modal-tags" class="hidden-view mb-6">
                 <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Category Tag</label>
                 <div class="flex flex-wrap gap-2">
@@ -223,21 +228,26 @@
             currentModalType = type;
             const title = document.getElementById('modal-title');
             const input = document.getElementById('modal-input');
+            const descInput = document.getElementById('modal-description');
+            const descContainer = document.getElementById('modal-description-container');
             const modal = document.getElementById('custom-modal');
             const tagsDiv = document.getElementById('modal-tags');
             const priDiv = document.getElementById('modal-priority');
 
             input.value = ''; 
+            descInput.value = ''; 
 
             if(type === 'activity') {
                 title.innerText = 'Create New Activity';
                 input.placeholder = 'e.g. Website Redesign...';
+                descContainer.classList.remove('hidden-view'); // เปิดช่อง description
                 tagsDiv.classList.remove('hidden-view');
                 priDiv.classList.add('hidden-view');
                 selectTag('Others');
             } else {
                 title.innerText = 'Add New Task';
                 input.placeholder = 'e.g. Design homepage mockup...';
+                descContainer.classList.add('hidden-view'); // ปิดช่อง description
                 tagsDiv.classList.add('hidden-view');
                 priDiv.classList.remove('hidden-view');
                 selectPriority('Normal');
@@ -253,10 +263,11 @@
 
         function saveModalData() {
             const val = document.getElementById('modal-input').value.trim();
+            const descVal = document.getElementById('modal-description').value.trim();
             if(!val) { alert("Please enter a name."); return; }
 
             if(currentModalType === 'activity') {
-                appData.activities.push({ id: Date.now().toString(), name: val, tag: selectedTag });
+                appData.activities.push({ id: Date.now().toString(), name: val, description: descVal, tag: selectedTag });
                 saveData();
                 renderActivities();
             } else if (currentModalType === 'task') {
@@ -306,12 +317,19 @@
                 const progress = actTasks.length === 0 ? 0 : Math.round((doneTasks / actTasks.length) * 100);
                 const displayTag = act.tag || 'Others';
                 
+                // ตรวจสอบว่ามี description หรือไม่ ถ้ามีให้สร้าง HTML ส่วนนี้เพิ่มเข้าไป
+                const displayDesc = act.description ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">${act.description}</p>` : '';
+
                 list.innerHTML += `
                 <div onclick="openActivity('${act.id}', '${act.name}')" class="bg-white dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-6 cursor-pointer hover:shadow-md border border-gray-100 dark:border-gray-700">
                     <div class="w-12 h-12 rounded-xl bg-brand-pink flex items-center justify-center text-gray-900 shadow-sm"><i class="fa-solid fa-folder"></i></div>
                     <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1"><h3 class="text-lg font-bold">${act.name}</h3><span class="px-2 py-0.5 rounded text-[10px] font-bold ${tagStyleMap[displayTag]}">${displayTag}</span></div>
-                        <p class="text-sm text-gray-500">${actTasks.length} Tasks</p>
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="text-lg font-bold">${act.name}</h3>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tagStyleMap[displayTag]}">${displayTag}</span>
+                        </div>
+                        ${displayDesc}
+                        <p class="text-sm text-gray-500 font-medium mt-2">${actTasks.length} Tasks</p>
                     </div>
                     <div class="w-48">
                         <div class="flex justify-between text-sm font-semibold mb-1"><span>Progress</span><span>${progress}%</span></div>
@@ -347,7 +365,6 @@
             const task = appData.tasks.find(t => t.id === taskId);
             if(task) {
                 task.status = newStatus;
-                // บันทึกเวลาที่ทำเสร็จ เพื่อเอาไปพล็อตกราฟเส้น
                 if(newStatus === 'done') {
                     task.completedAt = Date.now();
                 } else {
@@ -424,7 +441,7 @@
             lineChart = new Chart(ctxLine, {
                 type: 'line',
                 data: {
-                    labels: [], // จะถูกคำนวณย้อนหลัง 30 วัน
+                    labels: [], 
                     datasets: [{
                         label: 'Global Completion %',
                         data: [],
@@ -463,14 +480,11 @@
                 labels.push(targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
 
                 const targetTimestamp = targetDate.getTime();
-                
-                // นับจำนวน Task ทั้งหมดที่ถูกสร้าง "ก่อนหรือภายใน" วันนั้น (ใช้ id ที่เป็น timestamp)
                 const tasksUpToDate = appData.tasks.filter(t => parseInt(t.id) <= targetTimestamp);
                 
-                // นับจำนวน Task ที่ทำเสร็จ "ก่อนหรือภายใน" วันนั้น
                 const completedUpToDate = tasksUpToDate.filter(t => {
                     if (t.status === 'done') {
-                        const compTime = t.completedAt || parseInt(t.id); // ถ้าไม่มี completedAt ให้ใช้วันที่สร้างแทน
+                        const compTime = t.completedAt || parseInt(t.id); 
                         return compTime <= targetTimestamp;
                     }
                     return false;
