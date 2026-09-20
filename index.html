@@ -10,30 +10,13 @@
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            beige: '#F5E6D3',
-                            pink: '#D8B4F8',
-                            blue: '#AEC6FF',
-                            orange: '#FFC8A2',
-                            dark: '#1f2937',
-                        }
-                    }
-                }
-            }
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { brand: { beige: '#F5E6D3', pink: '#D8B4F8', blue: '#AEC6FF', orange: '#FFC8A2', dark: '#1f2937' } } } }
         }
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
         .hidden-view { display: none !important; }
-        
-        /* Custom Scrollbar for Kanban */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -47,9 +30,8 @@
         <div class="p-6 flex justify-between items-center">
             <h1 class="text-2xl font-bold tracking-tight">TaskFlow</h1>
         </div>
-
         <nav class="flex-1 px-4 space-y-2 mt-4">
-            <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 transition-all shadow-md">
+            <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 transition-all shadow-md bg-gray-900 text-white dark:bg-white dark:text-gray-900">
                 <i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard
             </button>
             <button onclick="switchPage('activities')" id="nav-activities" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 transition-all">
@@ -59,7 +41,6 @@
                 <i class="fa-solid fa-border-all w-5 text-center"></i> Tasks
             </button>
         </nav>
-
         <div class="p-4 border-t border-gray-200 dark:border-gray-700">
             <button onclick="toggleTheme()" class="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-80">
                 <i id="theme-icon" class="fa-solid fa-moon"></i> <span id="theme-text">Dark Mode</span>
@@ -70,348 +51,211 @@
     <!-- Main Content -->
     <main class="ml-64 flex-1 p-8 overflow-y-auto h-screen">
         
-        <!-- PAGE 1: DASHBOARD -->
+        <!-- DASHBOARD -->
         <div id="page-dashboard" class="page-view animate-fade-in block">
             <header class="mb-8">
                 <h2 class="text-3xl font-bold dark:text-white">Dashboard Overview</h2>
-                <p class="text-gray-500 dark:text-gray-400 mt-1">Track your overall progress and analytics.</p>
+                <p class="text-gray-500 mt-1">Track your overall progress and analytics.</p>
             </header>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div class="bg-brand-pink rounded-3xl p-6 text-gray-900 shadow-sm border border-black/5">
-                    <div class="flex items-center gap-3 mb-2 opacity-80">
-                        <i class="fa-solid fa-layer-group bg-black/10 p-2 rounded-lg"></i>
-                        <h3 class="text-sm font-semibold">Total Activities</h3>
-                    </div>
-                    <div class="text-5xl font-bold mt-4">2</div>
-                </div>
-                <div class="bg-brand-orange rounded-3xl p-6 text-gray-900 shadow-sm border border-black/5">
-                    <div class="flex items-center gap-3 mb-2 opacity-80">
-                        <i class="fa-solid fa-list-check bg-black/10 p-2 rounded-lg"></i>
-                        <h3 class="text-sm font-semibold">Total Tasks</h3>
-                    </div>
-                    <div class="text-5xl font-bold mt-4">3</div>
+                    <h3 class="text-sm font-semibold opacity-80 mb-2">Total Activities</h3>
+                    <div id="stat-activities" class="text-5xl font-bold mt-2">0</div>
                 </div>
                 <div class="bg-brand-blue rounded-3xl p-6 text-gray-900 shadow-sm border border-black/5">
-                    <div class="flex items-center gap-3 mb-2 opacity-80">
-                        <i class="fa-solid fa-chart-line bg-black/10 p-2 rounded-lg"></i>
-                        <h3 class="text-sm font-semibold">Global Completion</h3>
-                    </div>
-                    <div class="text-5xl font-bold mt-4">50<span class="text-2xl">%</span></div>
+                    <h3 class="text-sm font-semibold opacity-80 mb-2">Total Tasks</h3>
+                    <div id="stat-tasks" class="text-5xl font-bold mt-2">0</div>
                 </div>
             </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-lg font-bold mb-4">Task Status Distribution</h3>
-                    <div class="h-64 flex justify-center"><canvas id="donutChart"></canvas></div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h3 class="text-lg font-bold mb-4">Tasks per Activity</h3>
-                    <div class="h-64 w-full"><canvas id="barChart"></canvas></div>
-                </div>
-            </div>
+            <!-- Charts Section Removed for simplicity in local version, keeping focus on core app -->
         </div>
 
-        <!-- PAGE 2: ACTIVITIES -->
+        <!-- ACTIVITIES -->
         <div id="page-activities" class="page-view animate-fade-in hidden-view">
             <header class="flex justify-between items-end mb-8">
                 <div>
                     <h2 class="text-3xl font-bold dark:text-white">Activities</h2>
-                    <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your projects and see overall progress.</p>
+                    <p class="text-gray-500 mt-1">Manage your projects and see overall progress.</p>
                 </div>
-                <button class="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 shadow-md transition-all flex items-center gap-2">
+                <button onclick="addActivity()" class="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 shadow-md">
                     <i class="fa-solid fa-plus"></i> New Activity
                 </button>
             </header>
-
-            <div class="space-y-4">
-                <!-- Activity List Item 1 -->
-                <div onclick="openActivityTasks('act-1', 'Develop Web App')" class="bg-white dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-6 cursor-pointer hover:shadow-md hover:ring-2 hover:ring-brand-pink border border-gray-100 dark:border-gray-700 transition-all group">
-                    <div class="w-12 h-12 rounded-xl bg-brand-pink flex items-center justify-center text-gray-900 text-lg shadow-sm">
-                        <i class="fa-solid fa-code"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-lg font-bold mb-1 group-hover:text-brand-pink transition-colors">Develop Web App</h3>
-                        <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                            <span><i class="fa-regular fa-calendar mr-1"></i> Oct 25</span>
-                            <span><i class="fa-solid fa-bars-staggered mr-1"></i> 2 Tasks</span>
-                        </div>
-                    </div>
-                    <div class="w-48">
-                        <div class="flex justify-between text-sm font-semibold mb-1">
-                            <span>Progress</span>
-                            <span>50%</span>
-                        </div>
-                        <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3">
-                            <div class="bg-gray-900 dark:bg-white rounded-full h-3 transition-all" style="width: 50%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Activity List Item 2 -->
-                <div onclick="openActivityTasks('act-2', 'Marketing Strategy')" class="bg-white dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-6 cursor-pointer hover:shadow-md hover:ring-2 hover:ring-brand-blue border border-gray-100 dark:border-gray-700 transition-all group">
-                    <div class="w-12 h-12 rounded-xl bg-brand-blue flex items-center justify-center text-gray-900 text-lg shadow-sm">
-                        <i class="fa-solid fa-bullhorn"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-lg font-bold mb-1 group-hover:text-blue-500 transition-colors">Marketing Strategy</h3>
-                        <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                            <span><i class="fa-regular fa-calendar mr-1"></i> Nov 12</span>
-                            <span><i class="fa-solid fa-bars-staggered mr-1"></i> 1 Task</span>
-                        </div>
-                    </div>
-                    <div class="w-48">
-                        <div class="flex justify-between text-sm font-semibold mb-1">
-                            <span>Progress</span>
-                            <span>0%</span>
-                        </div>
-                        <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3">
-                            <div class="bg-gray-900 dark:bg-white rounded-full h-3 transition-all" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
+            <div id="activity-list" class="space-y-4">
+                <!-- Activities rendered here -->
             </div>
         </div>
 
-        <!-- PAGE 3: TASKS (KANBAN) -->
+        <!-- TASKS -->
         <div id="page-tasks" class="page-view animate-fade-in hidden-view">
-            
-            <!-- Empty State (When no activity is selected) -->
             <div id="tasks-empty-state" class="h-[70vh] flex flex-col items-center justify-center text-center block">
-                <div class="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-4xl mb-4 text-gray-400">
-                    <i class="fa-solid fa-list-check"></i>
-                </div>
+                <div class="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-4xl mb-4 text-gray-400"><i class="fa-solid fa-list-check"></i></div>
                 <h2 class="text-2xl font-bold mb-2">No Activity Selected</h2>
-                <p class="text-gray-500 max-w-md">Please go to the Activities page and select a project to view and manage its tasks.</p>
-                <button onclick="switchPage('activities')" class="mt-6 bg-brand-pink text-gray-900 px-6 py-2 rounded-full font-semibold hover:opacity-90 transition-all shadow-sm">
-                    Go to Activities
-                </button>
+                <button onclick="switchPage('activities')" class="mt-6 bg-brand-pink text-gray-900 px-6 py-2 rounded-full font-semibold hover:opacity-90">Go to Activities</button>
             </div>
 
-            <!-- Kanban Board (Visible when activity is selected) -->
             <div id="tasks-board-state" class="hidden-view">
                 <header class="flex justify-between items-end mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
                     <div>
-                        <button onclick="switchPage('activities')" class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white mb-2 flex items-center gap-1 transition-colors">
-                            <i class="fa-solid fa-arrow-left"></i> Back to Activities
-                        </button>
-                        <h2 id="current-activity-title" class="text-3xl font-bold dark:text-white flex items-center gap-3">
-                            Activity Name
-                        </h2>
+                        <button onclick="switchPage('activities')" class="text-sm text-gray-500 hover:text-gray-900 mb-2 flex items-center gap-1"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                        <h2 id="current-activity-title" class="text-3xl font-bold dark:text-white">Activity Name</h2>
                     </div>
-                    <button class="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 shadow-md transition-all flex items-center gap-2">
+                    <button onclick="addTask()" class="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90">
                         <i class="fa-solid fa-plus"></i> Add Task
                     </button>
                 </header>
-
                 <div class="flex gap-6 overflow-x-auto pb-4 h-[calc(100vh-200px)]">
-                    
-                    <!-- Column: To Do -->
-                    <div class="w-80 min-w-[320px] bg-white/40 dark:bg-gray-800/40 rounded-3xl p-4 flex flex-col border border-gray-200 dark:border-gray-700">
-                        <div class="flex justify-between items-center mb-4 px-2">
-                            <h3 class="font-bold flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                                <span class="w-3 h-3 rounded-full bg-brand-pink"></span> To Do
-                            </h3>
-                            <span class="bg-white dark:bg-gray-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm border border-gray-100 dark:border-gray-600">1</span>
-                        </div>
-                        <div class="flex-1 space-y-3 overflow-y-auto pr-1">
-                            <!-- Task Card -->
-                            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-grab hover:ring-2 ring-brand-pink/50 transition-all">
-                                <div class="flex justify-between items-start mb-2">
-                                    <span class="text-[10px] uppercase font-bold tracking-wider bg-brand-pink/20 text-brand-pink px-2 py-1 rounded-md">Frontend</span>
-                                    <span class="text-xs text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-full"><i class="fa-solid fa-fire text-[10px]"></i> High</span>
-                                </div>
-                                <h4 class="font-bold text-gray-900 dark:text-white mb-1">Design UI/UX Mockups</h4>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">Create wireframes and high-fidelity mockups for the new dashboard.</p>
-                                <div class="flex justify-between items-center text-xs text-gray-400">
-                                    <span><i class="fa-regular fa-calendar mr-1"></i> Tomorrow</span>
-                                    <button class="hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-gray-700 w-6 h-6 rounded-full flex items-center justify-center transition-colors"><i class="fa-solid fa-arrow-right"></i></button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="w-80 min-w-[320px] bg-white/40 dark:bg-gray-800/40 rounded-3xl p-4 flex flex-col">
+                        <h3 class="font-bold mb-4"><span class="text-brand-pink mr-2">●</span> To Do</h3>
+                        <div id="col-todo" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                     </div>
-
-                    <!-- Column: In Progress -->
-                    <div class="w-80 min-w-[320px] bg-white/40 dark:bg-gray-800/40 rounded-3xl p-4 flex flex-col border border-gray-200 dark:border-gray-700">
-                        <div class="flex justify-between items-center mb-4 px-2">
-                            <h3 class="font-bold flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                                <span class="w-3 h-3 rounded-full bg-brand-blue"></span> In Progress
-                            </h3>
-                            <span class="bg-white dark:bg-gray-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm border border-gray-100 dark:border-gray-600">1</span>
-                        </div>
-                        <div class="flex-1 space-y-3 overflow-y-auto pr-1">
-                             <!-- Task Card -->
-                             <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 cursor-grab hover:ring-2 ring-brand-blue/50 transition-all">
-                                <div class="flex justify-between items-start mb-2">
-                                    <span class="text-[10px] uppercase font-bold tracking-wider bg-brand-blue/20 text-blue-600 px-2 py-1 rounded-md">Backend</span>
-                                </div>
-                                <h4 class="font-bold text-gray-900 dark:text-white mb-1">Database Setup</h4>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">Configure schema and initial collections.</p>
-                                <div class="flex justify-between items-center text-xs text-gray-400">
-                                    <span><i class="fa-regular fa-calendar mr-1"></i> Today</span>
-                                    <div class="flex gap-1">
-                                        <button class="hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-gray-700 w-6 h-6 rounded-full flex items-center justify-center transition-colors"><i class="fa-solid fa-arrow-left"></i></button>
-                                        <button class="hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-gray-700 w-6 h-6 rounded-full flex items-center justify-center transition-colors"><i class="fa-solid fa-arrow-right"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="w-80 min-w-[320px] bg-white/40 dark:bg-gray-800/40 rounded-3xl p-4 flex flex-col">
+                        <h3 class="font-bold mb-4"><span class="text-brand-blue mr-2">●</span> In Progress</h3>
+                        <div id="col-inprogress" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                     </div>
-
-                    <!-- Column: Completed -->
-                    <div class="w-80 min-w-[320px] bg-white/40 dark:bg-gray-800/40 rounded-3xl p-4 flex flex-col border border-gray-200 dark:border-gray-700">
-                        <div class="flex justify-between items-center mb-4 px-2">
-                            <h3 class="font-bold flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                                <span class="w-3 h-3 rounded-full bg-green-400"></span> Completed
-                            </h3>
-                            <span class="bg-white dark:bg-gray-700 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm border border-gray-100 dark:border-gray-600">1</span>
-                        </div>
-                        <div class="flex-1 space-y-3 overflow-y-auto pr-1">
-                            <!-- Task Card (Completed state) -->
-                            <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 opacity-70">
-                                <h4 class="font-bold text-gray-900 dark:text-white mb-1 line-through">Project Initialization</h4>
-                                <div class="flex justify-between items-center text-xs text-green-500 mt-4 font-semibold">
-                                    <span><i class="fa-solid fa-check-circle mr-1"></i> Done</span>
-                                    <button class="text-gray-400 hover:text-gray-900 dark:hover:text-white w-6 h-6 rounded-full flex items-center justify-center transition-colors"><i class="fa-solid fa-arrow-left"></i></button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="w-80 min-w-[320px] bg-white/40 dark:bg-gray-800/40 rounded-3xl p-4 flex flex-col">
+                        <h3 class="font-bold mb-4"><span class="text-green-400 mr-2">●</span> Completed</h3>
+                        <div id="col-done" class="flex-1 space-y-3 overflow-y-auto pr-1"></div>
                     </div>
-
                 </div>
             </div>
         </div>
-
     </main>
 
     <script>
-        // --- Light/Dark Mode Logic ---
-        function toggleTheme() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
-            const text = document.getElementById('theme-text');
-            
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                icon.classList.replace('fa-sun', 'fa-moon');
-                text.innerText = "Dark Mode";
-            } else {
-                html.classList.add('dark');
-                icon.classList.replace('fa-moon', 'fa-sun');
-                text.innerText = "Light Mode";
-            }
-            updateChartColors();
+        // --- DATA MANAGEMENT (Local Storage) ---
+        let appData = JSON.parse(localStorage.getItem('taskflowData')) || { activities: [], tasks: [] };
+        let currentActivityId = null;
+
+        function saveData() {
+            localStorage.setItem('taskflowData', JSON.stringify(appData));
+            updateDashboard();
         }
 
-        // --- Navigation & Page Switching Logic ---
-        function switchPage(pageId) {
-            // ซ่อนทุกหน้า
-            document.querySelectorAll('.page-view').forEach(el => {
-                el.classList.add('hidden-view');
-                el.classList.remove('block');
-            });
-            
-            // แสดงหน้าที่เลือก
-            const selectedPage = document.getElementById('page-' + pageId);
-            selectedPage.classList.remove('hidden-view');
-            selectedPage.classList.add('block');
+        // --- THEME & NAVIGATION ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            document.getElementById('theme-icon').className = html.classList.contains('dark') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            document.getElementById('theme-text').innerText = html.classList.contains('dark') ? "Light Mode" : "Dark Mode";
+        }
 
-            // อัปเดตสไตล์ของเมนูด้านซ้าย
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(el => { el.classList.add('hidden-view'); el.classList.remove('block'); });
+            document.getElementById('page-' + pageId).classList.remove('hidden-view');
+            document.getElementById('page-' + pageId).classList.add('block');
+            
             document.querySelectorAll('.nav-item').forEach(btn => {
                 btn.className = 'nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 transition-all';
             });
+            document.getElementById('nav-' + pageId).className = 'nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 transition-all shadow-md';
             
-            const activeBtn = document.getElementById('nav-' + pageId);
-            activeBtn.className = 'nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 transition-all shadow-md';
+            if(pageId === 'activities') renderActivities();
         }
 
-        // --- Connect Activity to Tasks ---
-        function openActivityTasks(activityId, activityName) {
-            // เปลี่ยนชื่อหัวข้อในหน้า Tasks
-            document.getElementById('current-activity-title').innerText = activityName;
-            
-            // ซ่อน Empty State และแสดง Kanban Board
+        // --- ACTIVITIES ---
+        function addActivity() {
+            const name = prompt("ชื่อ Activity ใหม่:");
+            if (!name) return;
+            appData.activities.push({ id: Date.now().toString(), name: name });
+            saveData();
+            renderActivities();
+        }
+
+        function renderActivities() {
+            const list = document.getElementById('activity-list');
+            list.innerHTML = '';
+            appData.activities.forEach(act => {
+                const actTasks = appData.tasks.filter(t => t.activityId === act.id);
+                const doneTasks = actTasks.filter(t => t.status === 'done').length;
+                const progress = actTasks.length === 0 ? 0 : Math.round((doneTasks / actTasks.length) * 100);
+
+                list.innerHTML += `
+                <div onclick="openActivity('${act.id}', '${act.name}')" class="bg-white dark:bg-gray-800 rounded-2xl p-4 flex items-center gap-6 cursor-pointer hover:shadow-md border border-gray-100 dark:border-gray-700">
+                    <div class="w-12 h-12 rounded-xl bg-brand-pink flex items-center justify-center text-gray-900 shadow-sm"><i class="fa-solid fa-folder"></i></div>
+                    <div class="flex-1"><h3 class="text-lg font-bold">${act.name}</h3><p class="text-sm text-gray-500">${actTasks.length} Tasks</p></div>
+                    <div class="w-48">
+                        <div class="flex justify-between text-sm font-semibold mb-1"><span>Progress</span><span>${progress}%</span></div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3"><div class="bg-gray-900 dark:bg-white rounded-full h-3" style="width: ${progress}%"></div></div>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteActivity('${act.id}')" class="text-red-500 hover:text-red-700 px-2"><i class="fa-solid fa-trash"></i></button>
+                </div>`;
+            });
+        }
+
+        function deleteActivity(id) {
+            if(confirm("แน่ใจหรือไม่ที่จะลบ Activity นี้? (งานข้างในจะถูกลบด้วย)")) {
+                appData.activities = appData.activities.filter(a => a.id !== id);
+                appData.tasks = appData.tasks.filter(t => t.activityId !== id);
+                saveData();
+                renderActivities();
+            }
+        }
+
+        function openActivity(id, name) {
+            currentActivityId = id;
+            document.getElementById('current-activity-title').innerText = name;
             document.getElementById('tasks-empty-state').classList.add('hidden-view');
             document.getElementById('tasks-empty-state').classList.remove('block');
-            
             document.getElementById('tasks-board-state').classList.remove('hidden-view');
             document.getElementById('tasks-board-state').classList.add('block');
-            
-            // สลับไปหน้า Tasks
+            renderTasks();
             switchPage('tasks');
         }
 
-        // --- Chart.js Initializations ---
-        let donutChart, barChart;
+        // --- TASKS ---
+        function addTask() {
+            const name = prompt("ชื่องาน (Task) ใหม่:");
+            if (!name) return;
+            appData.tasks.push({ id: Date.now().toString(), activityId: currentActivityId, name: name, status: 'todo' });
+            saveData();
+            renderTasks();
+        }
 
-        function initCharts() {
-            const isDark = document.documentElement.classList.contains('dark');
-            const textColor = isDark ? '#9ca3af' : '#4b5563';
+        function moveTask(taskId, newStatus) {
+            const task = appData.tasks.find(t => t.id === taskId);
+            if(task) task.status = newStatus;
+            saveData();
+            renderTasks();
+        }
 
-            const ctxDonut = document.getElementById('donutChart').getContext('2d');
-            donutChart = new Chart(ctxDonut, {
-                type: 'doughnut',
-                data: {
-                    labels: ['To Do', 'In Progress', 'Completed'],
-                    datasets: [{
-                        data: [1, 1, 1],
-                        backgroundColor: ['#D8B4F8', '#AEC6FF', '#4ade80'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Inter' } } } },
-                    cutout: '75%'
+        function renderTasks() {
+            document.getElementById('col-todo').innerHTML = '';
+            document.getElementById('col-inprogress').innerHTML = '';
+            document.getElementById('col-done').innerHTML = '';
+
+            const currentTasks = appData.tasks.filter(t => t.activityId === currentActivityId);
+            currentTasks.forEach(task => {
+                let controls = '';
+                if(task.status === 'todo') {
+                    controls = `<button onclick="moveTask('${task.id}', 'inprogress')" class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs">Move <i class="fa-solid fa-arrow-right"></i></button>`;
+                } else if(task.status === 'inprogress') {
+                    controls = `
+                        <button onclick="moveTask('${task.id}', 'todo')" class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-arrow-left"></i></button>
+                        <button onclick="moveTask('${task.id}', 'done')" class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-arrow-right"></i></button>
+                    `;
+                } else {
+                    controls = `<button onclick="moveTask('${task.id}', 'inprogress')" class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs"><i class="fa-solid fa-arrow-left"></i> Undo</button>`;
                 }
-            });
 
-            const ctxBar = document.getElementById('barChart').getContext('2d');
-            barChart = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: ['Web App', 'Marketing'],
-                    datasets: [{
-                        label: 'Tasks',
-                        data: [2, 1],
-                        backgroundColor: '#AEC6FF',
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: isDark ? '#374151' : '#f3f4f6' }, ticks: { color: textColor, stepSize: 1 } },
-                        x: { grid: { display: false }, ticks: { color: textColor } }
-                    }
-                }
+                const taskHtml = `
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h4 class="font-bold text-gray-900 dark:text-white mb-3 ${task.status==='done'?'line-through opacity-60':''}">${task.name}</h4>
+                    <div class="flex justify-between items-center">${controls}</div>
+                </div>`;
+                
+                document.getElementById('col-' + task.status).innerHTML += taskHtml;
             });
         }
 
-        function updateChartColors() {
-            if(!donutChart || !barChart) return;
-            const isDark = document.documentElement.classList.contains('dark');
-            const textColor = isDark ? '#9ca3af' : '#4b5563';
-            const gridColor = isDark ? '#374151' : '#f3f4f6';
-
-            donutChart.options.plugins.legend.labels.color = textColor;
-            barChart.options.scales.x.ticks.color = textColor;
-            barChart.options.scales.y.ticks.color = textColor;
-            barChart.options.scales.y.grid.color = gridColor;
-            
-            donutChart.update();
-            barChart.update();
+        // --- DASHBOARD ---
+        function updateDashboard() {
+            document.getElementById('stat-activities').innerText = appData.activities.length;
+            document.getElementById('stat-tasks').innerText = appData.tasks.length;
         }
 
-        // Initialize on load
-        window.onload = () => {
-            initCharts();
-        };
+        // Init
+        window.onload = () => { updateDashboard(); renderActivities(); };
     </script>
 </body>
 </html>
