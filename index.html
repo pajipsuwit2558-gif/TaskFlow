@@ -15,10 +15,10 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'] }, 
                     colors: { 
                         brand: { 
-                            pink: '#f9a8d4', // ชมพูพาสเทลตามรูป
-                            blue: '#bfdbfe', // ฟ้าพาสเทลตามรูป
+                            pink: '#f9a8d4', 
+                            blue: '#bfdbfe', 
                             purple: '#e9d5ff', 
-                            graybg: '#f3f4f6', // สีพื้นหลังเทาอ่อนตามรูป
+                            graybg: '#f3f4f6', 
                             dark: '#1f2937' 
                         } 
                     } 
@@ -39,7 +39,7 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen relative pb-10">
 
-    <!-- Top Navigation (Pill Style from Image) -->
+    <!-- Top Navigation (Pill Style) -->
     <nav class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-black text-white rounded-full px-2 py-2 flex items-center gap-1 shadow-2xl glass-nav z-40 border border-gray-800">
         <div class="bg-brand-pink text-gray-900 p-2 rounded-full w-10 h-10 flex items-center justify-center font-bold mr-1">
             <i class="fa-solid fa-asterisk"></i>
@@ -165,16 +165,25 @@
         </div>
     </main>
 
-    <!-- CUSTOM POP-UP MODAL (Same Functionality) -->
+    <!-- CUSTOM POP-UP MODAL -->
     <div id="custom-modal" class="hidden-view fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm transition-opacity duration-300">
         <div class="bg-white dark:bg-gray-800 rounded-[32px] p-8 w-full max-w-md shadow-2xl transform transition-all">
             <h3 id="modal-title" class="text-2xl font-bold mb-6 dark:text-white">New Item</h3>
+            
             <input type="text" id="modal-input" class="w-full bg-gray-100 dark:bg-gray-700 border-none rounded-2xl px-5 py-4 mb-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-pink outline-none transition-all" placeholder="Enter name...">
             
+            <!-- Description (For Activity) -->
             <div id="modal-description-container" class="hidden-view mb-4">
                 <textarea id="modal-description" class="w-full bg-gray-100 dark:bg-gray-700 border-none rounded-2xl px-5 py-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-pink outline-none transition-all resize-none h-24" placeholder="Enter description (optional)..."></textarea>
             </div>
+
+            <!-- Due Date (For Both Activity and Task) -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"><i class="fa-regular fa-calendar mr-1"></i> Due Date (Optional)</label>
+                <input type="date" id="modal-duedate" class="w-full bg-gray-100 dark:bg-gray-700 border-none rounded-2xl px-5 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-pink outline-none transition-all text-sm">
+            </div>
             
+            <!-- Tags (For Activity) -->
             <div id="modal-tags" class="hidden-view mb-8">
                 <label class="block text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Category Tag</label>
                 <div class="flex flex-wrap gap-2">
@@ -185,6 +194,7 @@
                 </div>
             </div>
 
+            <!-- Priority (For Task) -->
             <div id="modal-priority" class="hidden-view mb-8">
                 <label class="block text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Priority Level</label>
                 <div class="flex gap-2">
@@ -202,12 +212,13 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- JAVASCRIPT: 100% PRESERVED FUNCTIONAL LOGIC -->
+    <!-- JAVASCRIPT LOGIC -->
     <!-- ============================================== -->
     <script>
         let appData = JSON.parse(localStorage.getItem('taskflowData')) || { activities: [], tasks: [] };
         let currentActivityId = null;
-        let currentModalType = ''; 
+        let currentModalType = ''; // 'activity', 'task', or 'edit-task'
+        let editingTaskId = null;
         let selectedTag = 'Others';
         let selectedPriority = 'Normal';
         let donutChart, lineChart;
@@ -215,6 +226,14 @@
         function saveData() {
             localStorage.setItem('taskflowData', JSON.stringify(appData));
             updateDashboard();
+        }
+
+        // Format Date Helper (YYYY-MM-DD -> Oct 25, 2026)
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            const date = new Date(y, m - 1, d);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
         // Modal Logic
@@ -242,18 +261,22 @@
             document.getElementById('pri-btn-' + pri).classList.add(borderMap[pri]);
         }
 
-        function openModal(type) {
+        function openModal(type, taskId = null) {
             currentModalType = type;
+            editingTaskId = taskId;
+            
             const title = document.getElementById('modal-title');
             const input = document.getElementById('modal-input');
             const descInput = document.getElementById('modal-description');
             const descContainer = document.getElementById('modal-description-container');
+            const dueDateInput = document.getElementById('modal-duedate');
             const modal = document.getElementById('custom-modal');
             const tagsDiv = document.getElementById('modal-tags');
             const priDiv = document.getElementById('modal-priority');
 
             input.value = ''; 
             descInput.value = ''; 
+            dueDateInput.value = '';
 
             if(type === 'activity') {
                 title.innerText = 'Create New Activity';
@@ -262,13 +285,23 @@
                 tagsDiv.classList.remove('hidden-view');
                 priDiv.classList.add('hidden-view');
                 selectTag('Others');
-            } else {
+            } else if (type === 'task') {
                 title.innerText = 'Add New Task';
                 input.placeholder = 'e.g. Design homepage mockup...';
                 descContainer.classList.add('hidden-view');
                 tagsDiv.classList.add('hidden-view');
                 priDiv.classList.remove('hidden-view');
                 selectPriority('Normal');
+            } else if (type === 'edit-task') {
+                const task = appData.tasks.find(t => t.id === taskId);
+                if (!task) return;
+                title.innerText = 'Edit Task';
+                input.value = task.name;
+                dueDateInput.value = task.dueDate || '';
+                descContainer.classList.add('hidden-view');
+                tagsDiv.classList.add('hidden-view');
+                priDiv.classList.remove('hidden-view');
+                selectPriority(task.priority || 'Normal');
             }
 
             modal.classList.remove('hidden-view');
@@ -277,21 +310,46 @@
 
         function closeModal() {
             document.getElementById('custom-modal').classList.add('hidden-view');
+            editingTaskId = null;
         }
 
         function saveModalData() {
             const val = document.getElementById('modal-input').value.trim();
             const descVal = document.getElementById('modal-description').value.trim();
+            const dueVal = document.getElementById('modal-duedate').value;
+            
             if(!val) { alert("Please enter a name."); return; }
 
             if(currentModalType === 'activity') {
-                appData.activities.push({ id: Date.now().toString(), name: val, description: descVal, tag: selectedTag });
+                appData.activities.push({ 
+                    id: Date.now().toString(), 
+                    name: val, 
+                    description: descVal, 
+                    tag: selectedTag,
+                    dueDate: dueVal
+                });
                 saveData();
                 renderActivities();
             } else if (currentModalType === 'task') {
-                appData.tasks.push({ id: Date.now().toString(), activityId: currentActivityId, name: val, status: 'todo', priority: selectedPriority });
+                appData.tasks.push({ 
+                    id: Date.now().toString(), 
+                    activityId: currentActivityId, 
+                    name: val, 
+                    status: 'todo', 
+                    priority: selectedPriority,
+                    dueDate: dueVal
+                });
                 saveData();
                 renderTasks();
+            } else if (currentModalType === 'edit-task') {
+                const task = appData.tasks.find(t => t.id === editingTaskId);
+                if (task) {
+                    task.name = val;
+                    task.priority = selectedPriority;
+                    task.dueDate = dueVal;
+                    saveData();
+                    renderTasks();
+                }
             }
             closeModal();
         }
@@ -304,7 +362,6 @@
         function toggleTheme() {
             const html = document.documentElement;
             html.classList.toggle('dark');
-            // อัปเดตไอคอนในดีไซน์ใหม่
             document.getElementById('theme-icon').className = html.classList.contains('dark') ? 'fa-solid fa-sun text-sm' : 'fa-solid fa-moon text-sm';
             updateChartTheme();
         }
@@ -314,13 +371,11 @@
             document.getElementById('page-' + pageId).classList.remove('hidden-view');
             document.getElementById('page-' + pageId).classList.add('block');
             
-            // อัปเดตสไตล์ของปุ่มเมนูแคปซูลด้านบน (เปลี่ยนจากโค้ดเดิมที่เป็นเมนูซ้าย)
             const inactiveClass = 'nav-item hover:bg-gray-800 text-gray-300 px-5 py-2.5 rounded-full font-bold text-xs tracking-wider flex items-center gap-2 transition-all';
             const activeClass = 'nav-item bg-brand-pink text-gray-900 px-5 py-2.5 rounded-full font-bold text-xs tracking-wider flex items-center gap-2 transition-all shadow-md';
             
             document.querySelectorAll('.nav-item').forEach(btn => {
                 btn.className = inactiveClass;
-                // รีเซ็ตข้อความให้เป็นไอคอนล้วนยกเว้นปุ่มที่ถูกเลือก
                 if(btn.id === 'nav-dashboard') btn.innerHTML = '<i class="fa-solid fa-chart-pie text-lg"></i>';
                 if(btn.id === 'nav-activities') btn.innerHTML = '<i class="fa-solid fa-layer-group text-lg"></i>';
                 if(btn.id === 'nav-tasks') btn.innerHTML = '<i class="fa-solid fa-border-all text-lg"></i>';
@@ -329,7 +384,6 @@
             const activeBtn = document.getElementById('nav-' + pageId);
             activeBtn.className = activeClass;
             
-            // คืนค่าตัวอักษรให้ปุ่มที่ถูกเลือก
             if(pageId === 'dashboard') activeBtn.innerHTML = '<i class="fa-solid fa-chart-pie"></i> DASHBOARD';
             if(pageId === 'activities') activeBtn.innerHTML = '<i class="fa-solid fa-layer-group"></i> ACTIVITIES';
             if(pageId === 'tasks') activeBtn.innerHTML = '<i class="fa-solid fa-border-all"></i> TASKS';
@@ -349,9 +403,10 @@
                 const progress = actTasks.length === 0 ? 0 : Math.round((doneTasks / actTasks.length) * 100);
                 const displayTag = act.tag || 'Others';
                 const displayDesc = act.description ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">${act.description}</p>` : '';
+                const displayDue = act.dueDate ? `<span class="text-xs text-gray-400 font-medium tracking-wide"><i class="fa-regular fa-calendar mr-1"></i> Due: ${formatDate(act.dueDate)}</span>` : '';
 
                 list.innerHTML += `
-                <div onclick="openActivity('${act.id}', '${act.name}')" class="bg-white dark:bg-gray-800 rounded-[32px] p-6 flex items-center gap-6 cursor-pointer hover:shadow-md border border-gray-100 dark:border-gray-700 transition-shadow">
+                <div onclick="openActivity('${act.id}', '${act.name.replace(/'/g, "\\'")}')" class="bg-white dark:bg-gray-800 rounded-[32px] p-6 flex items-center gap-6 cursor-pointer hover:shadow-md border border-gray-100 dark:border-gray-700 transition-shadow">
                     <div class="w-14 h-14 rounded-2xl bg-brand-pink flex items-center justify-center text-gray-900 shadow-sm text-xl"><i class="fa-solid fa-folder"></i></div>
                     <div class="flex-1">
                         <div class="flex items-center gap-3 mb-1">
@@ -359,13 +414,16 @@
                             <span class="px-3 py-1 rounded-full text-[10px] font-bold ${tagStyleMap[displayTag]}">${displayTag}</span>
                         </div>
                         ${displayDesc}
-                        <p class="text-xs text-gray-400 font-medium mt-2 uppercase tracking-wide"><i class="fa-solid fa-bars-staggered mr-1"></i> ${actTasks.length} Tasks</p>
+                        <div class="flex items-center gap-4 mt-2">
+                            <span class="text-xs text-gray-400 font-medium uppercase tracking-wide"><i class="fa-solid fa-bars-staggered mr-1"></i> ${actTasks.length} Tasks</span>
+                            ${displayDue}
+                        </div>
                     </div>
                     <div class="w-48">
                         <div class="flex justify-between text-xs font-bold mb-2 uppercase text-gray-500"><span>Progress</span><span>${progress}%</span></div>
                         <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden"><div class="bg-gray-900 dark:bg-brand-pink rounded-full h-3 transition-all duration-500" style="width: ${progress}%"></div></div>
                     </div>
-                    <button onclick="event.stopPropagation(); deleteActivity('${act.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-3 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="event.stopPropagation(); deleteActivity('${act.id}')" class="text-gray-300 hover:text-red-500 transition-colors p-3 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete Activity"><i class="fa-solid fa-trash"></i></button>
                 </div>`;
             });
         }
@@ -405,6 +463,14 @@
             renderTasks();
         }
 
+        function deleteTask(taskId) {
+            if(confirm("Delete this task?")) {
+                appData.tasks = appData.tasks.filter(t => t.id !== taskId);
+                saveData();
+                renderTasks();
+            }
+        }
+
         function renderTasks() {
             document.getElementById('col-todo').innerHTML = '';
             document.getElementById('col-inprogress').innerHTML = '';
@@ -419,18 +485,33 @@
                 } else if(task.status === 'inprogress') {
                     controls = `<button onclick="moveTask('${task.id}', 'todo')" class="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-200 transition-colors"><i class="fa-solid fa-arrow-left"></i></button><button onclick="moveTask('${task.id}', 'done')" class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-4 py-2 rounded-xl text-xs font-bold hover:bg-green-200 transition-colors">Done <i class="fa-solid fa-check ml-1"></i></button>`;
                 } else {
-                    controls = `<button onclick="moveTask('${task.id}', 'inprogress')" class="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-200 transition-colors"><i class="fa-solid fa-arrow-left mr-1"></i> Undo</button>`;
+                    controls = `<button onclick="moveTask('${task.id}', 'inprogress')" class="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors"><i class="fa-solid fa-arrow-left mr-1"></i> Undo</button>`;
                 }
 
                 const displayPri = task.priority || 'Normal';
                 const priIcon = displayPri === 'Urgent' ? '<i class="fa-solid fa-fire text-[10px] mr-1"></i>' : '';
+                
+                // แสดงผล Due Date ของ Task (ถ้ามี)
+                const dueHtml = task.dueDate 
+                    ? `<span class="text-[11px] text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${formatDate(task.dueDate)}</span>`
+                    : `<span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider"><i class="fa-regular fa-clock mr-1"></i> ${task.status==='done'?'Finished':'Pending'}</span>`;
 
                 document.getElementById('col-' + task.status).innerHTML += `
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-[24px] shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow relative">
-                    <span class="absolute top-5 right-5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide ${priStyleMap[displayPri]}">${priIcon}${displayPri}</span>
-                    <h4 class="font-bold text-gray-900 dark:text-white mb-5 pr-16 text-lg ${task.status==='done'?'line-through opacity-40':''}">${task.name}</h4>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-[24px] shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow relative group">
+                    <div class="flex justify-between items-start gap-2 mb-4">
+                        <h4 class="font-bold text-gray-900 dark:text-white text-lg leading-snug ${task.status==='done'?'line-through opacity-40':''}">${task.name}</h4>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${priStyleMap[displayPri]}">${priIcon}${displayPri}</span>
+                            <button onclick="openModal('edit-task', '${task.id}')" class="text-gray-400 hover:text-gray-900 dark:hover:text-white w-7 h-7 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center transition-colors" title="Edit Task">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteTask('${task.id}')" class="text-gray-300 hover:text-red-500 w-7 h-7 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center transition-colors" title="Delete Task">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider"><i class="fa-regular fa-clock mr-1"></i> ${task.status==='done'?'Finished':'Pending'}</span>
+                        ${dueHtml}
                         <div class="flex gap-2">${controls}</div>
                     </div>
                 </div>`;
@@ -455,19 +536,17 @@
             const ctxLine = document.getElementById('lineChart').getContext('2d');
             const isDark = document.documentElement.classList.contains('dark');
             const textColor = isDark ? '#9ca3af' : '#4b5563';
-            const gridColor = isDark ? '#374151' : '#e5e7eb'; // Softer grid line
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
 
-            // Donut Chart
             donutChart = new Chart(ctxDonut, {
                 type: 'doughnut',
                 data: {
                     labels: ['To Do', 'In Progress', 'Completed'],
-                    datasets: [{ data: [0, 0, 0], backgroundColor: ['#f9a8d4', '#e9d5ff', '#bfdbfe'], borderWidth: 0, hoverOffset: 4 }] // Updated colors
+                    datasets: [{ data: [0, 0, 0], backgroundColor: ['#f9a8d4', '#e9d5ff', '#bfdbfe'], borderWidth: 0, hoverOffset: 4 }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Inter', weight: 'bold' } } } }, cutout: '75%' }
             });
 
-            // Line Chart
             lineChart = new Chart(ctxLine, {
                 type: 'line',
                 data: {
@@ -475,8 +554,8 @@
                     datasets: [{
                         label: 'Global Completion %',
                         data: [],
-                        borderColor: '#1f2937', // Dark line matching the image style
-                        backgroundColor: 'transparent', // Removed fill
+                        borderColor: '#1f2937',
+                        backgroundColor: 'transparent',
                         borderWidth: 3,
                         fill: false,
                         tension: 0.4,
@@ -547,7 +626,7 @@
             const isDark = document.documentElement.classList.contains('dark');
             const textColor = isDark ? '#9ca3af' : '#4b5563';
             const gridColor = isDark ? '#374151' : '#e5e7eb';
-            const lineColor = isDark ? '#f9a8d4' : '#1f2937'; // Switch line color based on theme
+            const lineColor = isDark ? '#f9a8d4' : '#1f2937';
             
             donutChart.options.plugins.legend.labels.color = textColor;
             donutChart.update();
